@@ -2,79 +2,50 @@ use petgraph::graph::{Graph, NodeIndex};
 use serde::Deserialize;
 use rand::seq::SliceRandom;
 
-
-#[serde(rename_all = "PascalCase")]
-
-//All the tested CSV variables
-
+// All the tested CSV variables
 #[derive(Debug, Deserialize, Clone)]
+
 pub struct Patient {
-    #[serde(rename = "State_INT")]
-    pub state_int: u8,
+    pub State_INT: u8,
     pub Sex_INT: u8,
-    pub general_health_int: u8,
-    pub physical_health_days: u8,
-    pub mental_health_days: u8,
-    pub last_checkup_time_int: u8,
-    pub physical_activities_int: u8,
-    pub sleep_hours: u8,
-    #[serde(rename = "RaceEthnicityCategory_INT")]
-    pub race_ethnicity_category_int: u8,
-    pub age_category_int: u8,
-    pub weight_in_kilograms: f32,
-    pub bmi: f32,
-    #[serde(rename = "RemovedTeeth_INT")]
-    pub removed_teeth: u8,
-    #[serde(rename = "HadHeartAttack_INT")]
-    pub had_heart_attack_int: u8,
-    #[serde(rename = "HadAngina_INT")]
-    pub had_angina_int: u8,
-    #[serde(rename = "HadStroke_INT")]
-    pub had_stroke_int: u8,
-    #[serde(rename = "HadSkinCancer_INT")]
-    pub had_skin_cancer: u8,
-    #[serde(rename = "HadCOPD_INT")]
-    pub had_copd_int: u8,
-    #[serde(rename = "HadDepressiveDisorder_INT")]
-    pub had_depressive_disorder_int: u8,
-    #[serde(rename = "HadKidneyDisease_INT")]
-    pub had_kidney_disease_int: u8,
-    #[serde(rename = "HadArthritis_INT")]
-    pub had_arthritis_int: u8,
-    #[serde(rename = "HadDiabetes_INT")]
-    pub had_diabetes_int: u8,
-    #[serde(rename = "DeafOrHardOfHearing_INT")]
-    pub deaf_or_hard_of_hearing_int: u8,
-    #[serde(rename = "BlindOrVisionDifficulty_INT")]
-    pub blind_or_vision_difficulty_int: u8,
-    #[serde(rename = "DifficultyConcentrating_INT")]
-    pub difficulty_concentrating_int: u8,
-    #[serde(rename = "DifficultyWalking_INT")]
-    pub difficulty_walking_int: u8,
-    #[serde(rename = "DifficultyDressingBathing_INT")]
-    pub difficulty_dressing_bathing_int: u8,
-    #[serde(rename = "DifficultyErrands_INT")]
-    pub difficulty_errands_int: u8,
-    #[serde(rename = "SmokerStatus_INT")]
-    pub smoker_status_int: u8,
-    #[serde(rename = "ECigaretteUsage_INT")]
-    pub e_cigarette_usage_int: u8,
-    #[serde(rename = "ChestScan_INT")]
-    pub chest_scan_int: u8,
-    #[serde(rename = "AlcoholDrinkers_INT")]
-    pub alcohol_drinkers_int: u8,
-    #[serde(rename = "HIVTesting_INT")]
-    pub hiv_testing_int: u8,
-    #[serde(rename = "FluVaxLast12_INT")]
-    pub flu_vax_last_12_int: u8,
-    #[serde(rename = "PneumoVacEver_INT")]
-    pub pneumo_vac_ever_int: u8,
-    #[serde(rename = "TetanusLast10Tdap_INT")]
-    pub tetanus_last_10_tdap_int: u8,
-    #[serde(rename = "HighRiskLastYear_INT")]
-    pub high_risk_last_year_int: u8,
-    #[serde(rename = "CovidPos_INT")]
-    pub covid_pos_int: u8,
+    pub GeneralHealth_INT: u8,
+    pub PhysicalHealthDays: u8,
+    pub MentalHealthDays: u8,
+    pub LastCheckupTime_INT: u8,
+    pub PhysicalActivities_INT: u8,
+    pub SleepHours: u8,
+    pub RemovedTeeth_INT: u8,
+    pub HadHeartAttack_INT: u8,
+    pub HadAngina_INT: u8,
+    pub HadStroke_INT: u8,
+    pub HadAsthma_INT: u8,
+    pub HadSkinCancer_INT: u8,
+    pub HadCOPD_INT: u8,
+    pub HadDepressiveDisorder_INT: u8,
+    pub HadKidneyDisease_INT: u8,
+    pub HadArthritis_INT: u8,
+    pub HadDiabetes_INT: u8,
+    pub DeafOrHardOfHearing_INT: u8,
+    pub BlindOrVisionDifficulty_INT: u8,
+    pub DifficultyConcentrating_INT: u8,
+    pub DifficultyWalking_INT: u8,
+    pub DifficultyDressingBathing_INT: u8,
+    pub DifficultyErrands_INT: u8,
+    pub SmokerStatus_INT: u8,
+    pub ECigaretteUsage_INT: u8,
+    pub ChestScan_INT: u8,
+    pub RaceEthnicityCategory_INT: u8,
+    pub AgeCategory_INT: u8,
+    pub HeightInMeters: f32,
+    pub WeightInKilograms: f32,
+    pub BMI: f32,
+    pub AlcoholDrinkers_INT: u8,
+    pub HIVTesting_INT: u8,
+    pub FluVaxLast12_INT: u8,
+    pub PneumoVaxEver_INT: u8,
+    pub TetanusLast10Tdap_INT: u8,
+    pub HighRiskLastYear_INT: u8,
+    pub CovidPos_INT: u8,
 }
 
 
@@ -184,17 +155,17 @@ pub fn build_graph(patients: &[Patient], threshold: u32) -> Graph<Patient, u32> 
 //Broken up into 4 different similarity scores equal(==), small(3), medium(5), high(10)
 pub fn calculate_similarity(p1: &Patient, p2: &Patient) -> u32 {
     let mut score = 0;
-    if (p1.state_int as i8 == p2.state_int as i8) { score += 1; }//equal
+    if (p1.State_INT as i8 == p2.State_INT as i8) { score += 1; }//equal
     if (p1.Sex_INT as i8 == p2.Sex_INT as i8) { score += 1; }//equal
-    if (p1.general_health_int as i8 - p2.general_health_int as i8).abs() <= 3 { score += 1; }//small
-    if (p1.physical_activities_int as i8 - p2.physical_activities_int as i8).abs() <= 3 { score += 1; }//small
-    if (p1.mental_health_days as i8 - p2.mental_health_days as i8).abs() <= 3 { score += 1; }//small
-    if (p1.last_checkup_time_int as i8 - p2.last_checkup_time_int as i8).abs() <= 3 { score += 1; }//small
-    if (p1.physical_health_days as i8 - p2.physical_health_days as i8).abs() <= 3 { score += 1; }//small
-    if (p1.sleep_hours as i8 - p2.sleep_hours as i8).abs() <= 3 {score += 1} //small
-    if (p1.race_ethnicity_category_int as i8 == p2.race_ethnicity_category_int as i8) { score += 1; }//equal
-    if (p1.weight_in_kilograms as i8 - p2.weight_in_kilograms as i8).abs() <= 10 { score += 1; }//large
-    if (p1.bmi as i8 - p2.bmi as i8).abs() <= 5 { score += 1; }//medium
+    if (p1.GeneralHealth_INT as i8 - p2.GeneralHealth_INT as i8).abs() <= 3 { score += 1; }//small
+    if (p1.PhysicalActivities_INT as i8 - p2.PhysicalActivities_INT as i8).abs() <= 3 { score += 1; }//small
+    if (p1.MentalHealthDays as i8 - p2.MentalHealthDays as i8).abs() <= 3 { score += 1; }//small
+    if (p1.LastCheckupTime_INT as i8 - p2.LastCheckupTime_INT as i8).abs() <= 3 { score += 1; }//small
+    if (p1.PhysicalHealthDays as i8 - p2.PhysicalHealthDays as i8).abs() <= 3 { score += 1; }//small
+    if (p1.SleepHours as i8 - p2.SleepHours as i8).abs() <= 3 {score += 1} //small
+    if (p1.RaceEthnicityCategory_INT as i8 == p2.RaceEthnicityCategory_INT as i8) { score += 1; }//equal
+    if (p1.WeightInKilograms as i8 - p2.WeightInKilograms as i8).abs() <= 10 { score += 1; }//large
+    if (p1.BMI as i8 - p2.BMI as i8).abs() <= 5 { score += 1; }//medium
     score
 }
 
@@ -216,7 +187,7 @@ pub fn predict_risk(graph: &Graph<Patient, u32>, new_patient: Patient, threshold
 
     for neighbor in neighbors {
         let neighbor_patient = graph.node_weight(neighbor).unwrap();
-        risk_sum += neighbor_patient.had_heart_attack_int as f64;
+        risk_sum += neighbor_patient.HadHeartAttack_INT as f64;
         count += 1;
     }
 

@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let predicted_label = if predicted_risk >= 0.5 { 1 } else { 0 };
 
         // Use `HadHeartAttack_INT` as the true label
-        if predicted_label == test_patient.had_heart_attack_int {
+        if predicted_label == test_patient.HadHeartAttack_INT {
             correct_predictions += 1;
         }
     }
