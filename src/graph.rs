@@ -2,9 +2,7 @@ use petgraph::graph::{Graph, NodeIndex};
 use serde::Deserialize;
 use rand::seq::SliceRandom;
 
-// All the tested CSV variables
 #[derive(Debug, Deserialize, Clone)]
-
 pub struct Patient {
     pub State_INT: u8,
     pub Sex_INT: u8,
@@ -45,23 +43,10 @@ pub struct Patient {
     pub PneumoVaxEver_INT: u8,
     pub TetanusLast10Tdap_INT: u8,
     pub HighRiskLastYear_INT: u8,
-    pub CovidPos_INT: u8,
 }
 
-
-//State_INT,Sex_INT,GeneralHealth_INT,PhysicalHealthDays,MentalHealthDays,LastCheckupTime_INT,
-//PhysicalActivities_INT,SleepHours,RemovedTeeth_INT,HadHeartAttack_INT,HadAngina_INT,
-//HadStroke_INT,HadAsthma_INT,HadSkinCancer_INT,HadCOPD_INT,HadDepressiveDisorder_INT,HadKidneyDisease_INT,
-//HadArthritis_INT,HadDiabetes_INT,DeafOrHardOfHearing_INT,BlindOrVisionDifficulty_INT,DifficultyConcentrating_INT,
-//DifficultyWalking_INT,DifficultyDressingBathing_INT,DifficultyErrands_INT,SmokerStatus_INT,ECigaretteUsage_INT,
-//ChestScan_INT,RaceEthnicityCategory_INT,AgeCategory_INT,HeightInMeters,WeightInKilograms,BMI,AlcoholDrinkers_INT,
-//HIVTesting_INT,FluVaxLast12_INT,PneumoVaxEver_INT,TetanusLast10Tdap_INT,HighRiskLastYear_INT,CovidPos_INT
-
-//Loading Dataset
 pub fn load_dataset(file_path: &str) -> Result<Vec<Patient>, Box<dyn std::error::Error>> {
     let mut reader = csv::Reader::from_path(file_path)?;
-    println!("CSV Headers: {:?}", reader.headers()?);
-
     let mut dataset = Vec::new();
 
     for (i, result) in reader.deserialize().enumerate() {
@@ -74,62 +59,35 @@ pub fn load_dataset(file_path: &str) -> Result<Vec<Patient>, Box<dyn std::error:
     Ok(dataset)
 }
 
-
-pub fn split_and_randomize(data: Vec<Patient>) -> (Vec<Patient>, Vec<Patient>, Vec<Patient>, Vec<Patient>) {
+pub fn randomize_and_split(data: Vec<Patient>, test_ratio: f64) -> ((Vec<Patient>, Vec<Patient>), (Vec<Patient>, Vec<Patient>), (Vec<Patient>, Vec<Patient>), (Vec<Patient>, Vec<Patient>)) {
     let mut rng = rand::thread_rng();
     let mut shuffled_data = data.clone();
-    
-    // Randomize the dataset
     shuffled_data.shuffle(&mut rng);
-    
-    // Calculate the size for each 50 different sections
+
     let quarter_size = shuffled_data.len() / 50;
-    
-    // Split the dataset into four quarters
-    let first_quarter = shuffled_data[..quarter_size].to_vec();
-    let second_quarter = shuffled_data[quarter_size..(2 * quarter_size)].to_vec();
-    let third_quarter = shuffled_data[(2 * quarter_size)..(3 * quarter_size)].to_vec();
-    let fourth_quarter = shuffled_data[(3 * quarter_size)..].to_vec();
+    let quarters = vec![
+        &shuffled_data[..quarter_size],
+        &shuffled_data[quarter_size..(2 * quarter_size)],
+        &shuffled_data[(2 * quarter_size)..(3 * quarter_size)],
+        &shuffled_data[(3 * quarter_size)..],
+    ];
 
-    (first_quarter, second_quarter, third_quarter, fourth_quarter)
-}
+    let splits: Vec<(Vec<Patient>, Vec<Patient>)> = quarters
+        .iter()
+        .map(|quarter| {
+            let test_size = (quarter.len() as f64 * test_ratio).ceil() as usize;
+            let train_data = quarter[..quarter.len() - test_size].to_vec();
+            let test_data = quarter[quarter.len() - test_size..].to_vec();
+            (train_data, test_data)
+        })
+        .collect();
 
-pub fn split_dataset(data: Vec<Patient>, test_ratio: f64) -> (Vec<Patient>, Vec<Patient>) {
-    let mut rng = rand::thread_rng();
-    let mut shuffled_data = data.clone();
-    
-    // Randomize the dataset
-    shuffled_data.shuffle(&mut rng);
-
-    // Determine the size of the test set
-    let test_size = (shuffled_data.len() as f64 * test_ratio).ceil() as usize;
-
-    // Split into test and training sets
-    let test_data = shuffled_data.split_off(shuffled_data.len() - test_size);
-    let train_data = shuffled_data;
-
-    (train_data, test_data)
-}
-
-pub fn process_dataset(
-    data: Vec<Patient>, 
-    test_ratio: f64
-) -> (
-    (Vec<Patient>, Vec<Patient>), 
-    (Vec<Patient>, Vec<Patient>), 
-    (Vec<Patient>, Vec<Patient>), 
-    (Vec<Patient>, Vec<Patient>)
-) {
-    // Split and randomize the dataset into quarters
-    let (q1, q2, q3, q4) = split_and_randomize(data);
-
-    // Further split each quarter into training and testing datasets
-    let first_split = split_dataset(q1, test_ratio);
-    let second_split = split_dataset(q2, test_ratio);
-    let third_split = split_dataset(q3, test_ratio);
-    let fourth_split = split_dataset(q4, test_ratio);
-
-    (first_split, second_split, third_split, fourth_split)
+    (
+        splits[0].clone(),
+        splits[1].clone(),
+        splits[2].clone(),
+        splits[3].clone(),
+    )
 }
 
 pub fn build_graph(patients: &[Patient], threshold: u32) -> Graph<Patient, u32> {
@@ -152,20 +110,19 @@ pub fn build_graph(patients: &[Patient], threshold: u32) -> Graph<Patient, u32> 
     graph
 }
 
-//Broken up into 4 different similarity scores equal(==), small(3), medium(5), high(10)
 pub fn calculate_similarity(p1: &Patient, p2: &Patient) -> u32 {
     let mut score = 0;
-    if (p1.State_INT as i8 == p2.State_INT as i8) { score += 1; }//equal
-    if (p1.Sex_INT as i8 == p2.Sex_INT as i8) { score += 1; }//equal
-    if (p1.GeneralHealth_INT as i8 - p2.GeneralHealth_INT as i8).abs() <= 3 { score += 1; }//small
-    if (p1.PhysicalActivities_INT as i8 - p2.PhysicalActivities_INT as i8).abs() <= 3 { score += 1; }//small
-    if (p1.MentalHealthDays as i8 - p2.MentalHealthDays as i8).abs() <= 3 { score += 1; }//small
-    if (p1.LastCheckupTime_INT as i8 - p2.LastCheckupTime_INT as i8).abs() <= 3 { score += 1; }//small
-    if (p1.PhysicalHealthDays as i8 - p2.PhysicalHealthDays as i8).abs() <= 3 { score += 1; }//small
-    if (p1.SleepHours as i8 - p2.SleepHours as i8).abs() <= 3 {score += 1} //small
-    if (p1.RaceEthnicityCategory_INT as i8 == p2.RaceEthnicityCategory_INT as i8) { score += 1; }//equal
-    if (p1.WeightInKilograms as i8 - p2.WeightInKilograms as i8).abs() <= 10 { score += 1; }//large
-    if (p1.BMI as i8 - p2.BMI as i8).abs() <= 5 { score += 1; }//medium
+    if p1.State_INT == p2.State_INT { score += 1; }
+    if p1.Sex_INT == p2.Sex_INT { score += 1; }
+    if (p1.GeneralHealth_INT as i8 - p2.GeneralHealth_INT as i8).abs() <= 3 { score += 1; }
+    if (p1.PhysicalActivities_INT as i8 - p2.PhysicalActivities_INT as i8).abs() <= 3 { score += 1; }
+    if (p1.MentalHealthDays as i8 - p2.MentalHealthDays as i8).abs() <= 3 { score += 1; }
+    if (p1.LastCheckupTime_INT as i8 - p2.LastCheckupTime_INT as i8).abs() <= 3 { score += 1; }
+    if (p1.PhysicalHealthDays as i8 - p2.PhysicalHealthDays as i8).abs() <= 3 { score += 1; }
+    if (p1.SleepHours as i8 - p2.SleepHours as i8).abs() <= 3 { score += 1; }
+    if p1.RaceEthnicityCategory_INT == p2.RaceEthnicityCategory_INT { score += 1; }
+    if (p1.WeightInKilograms - p2.WeightInKilograms).abs() <= 10.0 { score += 1; }
+    if (p1.BMI - p2.BMI).abs() <= 5.0 { score += 1; }
     score
 }
 
@@ -197,3 +154,4 @@ pub fn predict_risk(graph: &Graph<Patient, u32>, new_patient: Patient, threshold
 
     risk_sum / count as f64
 }
+

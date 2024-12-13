@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "DS210_Project"
+name = "DS210_Project_Quach"
 version = "0.1.0"
 dependencies = [
  "csv",
